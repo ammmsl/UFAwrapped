@@ -178,7 +178,7 @@
 
     <div id="loader">
         <div class="spinner"></div>
-        <div style="font-family: 'Anton'; letter-spacing: 1px;">CRUNCHING STATS...</div>
+        <div style="font-family: 'Anton'; letter-spacing: 1px;">CRUNCHING 2025 STATS...</div>
     </div>
 
     <div class="story-container">
@@ -196,9 +196,9 @@
         <section id="slide2">
             <div class="content-box">
                 <h2>THE HUSTLE</h2>
-                <p>Together, we showed up.</p>
+                <p>2025 Total Impact</p>
                 <div class="big-stat" id="totalSessionsGlobal">0</div>
-                <div style="text-transform: uppercase; letter-spacing: 2px; color: var(--text-dim);">Total Person-Sessions Played</div>
+                <div style="text-transform: uppercase; letter-spacing: 2px; color: var(--text-dim);">Person-Sessions Played</div>
                 
                 <div style="margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
                     <div style="font-size: 2.5rem; font-family: 'Anton'; color: var(--accent);" id="totalMoneyGlobal">0</div>
@@ -220,7 +220,7 @@
         <section id="slide4">
             <div class="content-box">
                 <h2>THE IRON SQUAD</h2>
-                <p>Most sessions attended this year.</p>
+                <p>Top attendees of 2025.</p>
                 <div id="leaderboardList" style="width: 100%;">
                     </div>
             </div>
@@ -259,7 +259,7 @@
         <section id="slide6">
             <div class="content-box">
                 <h2>THE FULL SQUAD</h2>
-                <p>Every player who stepped on the field.</p>
+                <p>Everyone who played in 2025.</p>
                 
                 <div class="scrollable-roster" id="fullRosterList">
                     </div>
@@ -280,24 +280,27 @@
     };
 
     let globalData = {
-        attendance: [],
-        summary: [],
+        allAttendance: [], // Raw data
+        attendance2025: [], // Filtered for 2025
         users: []
     };
 
     // --- Init ---
     async function init() {
         try {
-            const [attRes, sumRes] = await Promise.all([
-                fetch(`${CONFIG.baseUrl}/${CONFIG.sheetID}/values/PivotAttendance?key=${CONFIG.apiKey}`).then(r=>r.json()),
-                fetch(`${CONFIG.baseUrl}/${CONFIG.sheetID}/values/Summary Sheet?key=${CONFIG.apiKey}`).then(r=>r.json())
-            ]);
-
-            globalData.attendance = attRes.values.slice(1);
-            globalData.summary = sumRes.values.slice(1);
+            const attRes = await fetch(`${CONFIG.baseUrl}/${CONFIG.sheetID}/values/PivotAttendance?key=${CONFIG.apiKey}`).then(r=>r.json());
             
-            // Extract unique users
-            const userSet = new Set(globalData.attendance.map(r => r[0]));
+            globalData.allAttendance = attRes.values.slice(1);
+            
+            // --- FILTER: Only 2025 Data ---
+            // Assuming Column 3 (index 3) contains the date string (e.g. "Jan 01, 2025")
+            globalData.attendance2025 = globalData.allAttendance.filter(row => {
+                const dateStr = row[3]; 
+                return dateStr && dateStr.toString().includes('2025');
+            });
+            
+            // Extract unique users from the 2025 dataset
+            const userSet = new Set(globalData.attendance2025.map(r => r[0]));
             globalData.users = Array.from(userSet).sort();
 
             processAndRender();
@@ -315,16 +318,24 @@
     }
 
     function processAndRender() {
+        const data = globalData.attendance2025; // Use filtered data
+        
         // --- Slide 2: Global Stats ---
-        const totalSessions = globalData.attendance.length;
-        const totalMoney = globalData.summary.reduce((acc, row) => acc + (parseFloat(row[4]?.replace(/[^\d.-]/g, '')) || 0), 0);
+        const totalSessions = data.length;
+        
+        // Calculate Total Money from individual sessions (Column 4)
+        // Clean currency string (remove "MVR", commas, spaces)
+        const totalMoney = data.reduce((acc, row) => {
+            const val = parseFloat(row[4]?.toString().replace(/[^\d.-]/g, '')) || 0;
+            return acc + val;
+        }, 0);
         
         animateValue(document.getElementById('totalSessionsGlobal'), 0, totalSessions, 2000);
-        document.getElementById('totalMoneyGlobal').innerText = totalMoney.toLocaleString();
+        document.getElementById('totalMoneyGlobal').innerText = Math.round(totalMoney).toLocaleString();
 
         // --- Slide 3: Monthly Chart ---
         const months = {};
-        globalData.attendance.forEach(row => {
+        data.forEach(row => {
             const m = row[2]; // Month column
             if(m) months[m] = (months[m] || 0) + 1;
         });
@@ -332,13 +343,13 @@
         // Sort months specifically for chart
         const monthOrder = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         const labels = Object.keys(months).sort((a,b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
-        const data = labels.map(k => months[k]);
+        const chartData = labels.map(k => months[k]);
 
-        renderChart(labels, data);
+        renderChart(labels, chartData);
 
         // --- Data Prep for Leaderboard & Roster ---
         const userCounts = {};
-        globalData.attendance.forEach(row => {
+        data.forEach(row => {
             const u = row[0];
             userCounts[u] = (userCounts[u] || 0) + 1;
         });
@@ -359,7 +370,7 @@
             `;
         });
 
-        // --- Slide 6: Full Roster (NEW) ---
+        // --- Slide 6: Full Roster (All Players) ---
         const rosterContainer = document.getElementById('fullRosterList');
         sortedUsers.forEach((u, index) => {
             rosterContainer.innerHTML += `
@@ -409,13 +420,14 @@
         searchInput.value = '';
         suggestBox.innerHTML = '';
         
-        // Calculate Stats
-        const userRows = globalData.attendance.filter(r => r[0] === name);
+        // Calculate Stats from 2025 Data
+        const data = globalData.attendance2025;
+        const userRows = data.filter(r => r[0] === name);
         const count = userRows.length;
         
         // Calculate Rank
         const allCounts = {};
-        globalData.attendance.forEach(r => allCounts[r[0]] = (allCounts[r[0]] || 0) + 1);
+        data.forEach(r => allCounts[r[0]] = (allCounts[r[0]] || 0) + 1);
         const sortedRanks = Object.entries(allCounts).sort(([,a], [,b]) => b - a);
         const rankIndex = sortedRanks.findIndex(x => x[0] === name);
         const rank = rankIndex + 1;

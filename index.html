@@ -172,6 +172,36 @@
         }
         @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateX(-50%) translateY(0);} 40% {transform: translateX(-50%) translateY(-10px);} 60% {transform: translateX(-50%) translateY(-5px);} }
 
+        /* DEBT MODAL STYLES */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 1000;
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a1a, #000);
+            border: 2px solid var(--danger);
+            border-radius: 20px; padding: 30px; text-align: center;
+            max-width: 90%; width: 350px;
+            box-shadow: 0 0 30px rgba(255, 71, 87, 0.4);
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-5px);} 75% {transform: translateX(5px);} }
+        
+        .debt-amount {
+            font-family: 'Anton', sans-serif; font-size: 2.5rem; color: var(--danger); margin: 15px 0;
+        }
+        .qr-img {
+            width: 150px; height: 150px; border-radius: 10px; margin: 10px auto;
+            border: 2px solid #fff;
+        }
+        .pay-btn {
+            background: var(--danger); color: white; border: none; padding: 12px 24px;
+            border-radius: 30px; font-weight: bold; font-size: 1rem; cursor: pointer;
+            margin-top: 15px; width: 100%; text-transform: uppercase;
+        }
+
     </style>
 </head>
 <body>
@@ -179,6 +209,25 @@
     <div id="loader">
         <div class="spinner"></div>
         <div style="font-family: 'Anton'; letter-spacing: 1px;">CRUNCHING 2025 STATS...</div>
+    </div>
+
+    <div id="debtModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 style="color: var(--danger); margin-bottom: 10px;">HOLD UP! ✋</h2>
+            <p style="color: #ddd; font-size: 0.95rem;">We found your stats... but we also found this:</p>
+            
+            <div class="debt-amount" id="debtAmount">MVR 0</div>
+            
+            <img src="payment_qr.png" alt="Payment QR" class="qr-img">
+            
+            <p style="font-size: 0.8rem; color: #aaa; margin-top: 10px;">
+                Clear your balance to reach "Legend" status in real life.
+            </p>
+            
+            <button class="pay-btn" onclick="document.getElementById('debtModal').style.display='none'">
+                I PROMISE I'LL PAY 🥺
+            </button>
+        </div>
     </div>
 
     <div class="story-container">
@@ -282,18 +331,22 @@
     let globalData = {
         allAttendance: [], // Raw data
         attendance2025: [], // Filtered for 2025
+        summary: [], // For debts
         users: []
     };
 
     // --- Init ---
     async function init() {
         try {
-            const attRes = await fetch(`${CONFIG.baseUrl}/${CONFIG.sheetID}/values/PivotAttendance?key=${CONFIG.apiKey}`).then(r=>r.json());
+            const [attRes, sumRes] = await Promise.all([
+                fetch(`${CONFIG.baseUrl}/${CONFIG.sheetID}/values/PivotAttendance?key=${CONFIG.apiKey}`).then(r=>r.json()),
+                fetch(`${CONFIG.baseUrl}/${CONFIG.sheetID}/values/Summary Sheet?key=${CONFIG.apiKey}`).then(r=>r.json())
+            ]);
             
             globalData.allAttendance = attRes.values.slice(1);
+            globalData.summary = sumRes.values.slice(1);
             
             // --- FILTER: Only 2025 Data ---
-            // Assuming Column 3 (index 3) contains the date string (e.g. "Jan 01, 2025")
             globalData.attendance2025 = globalData.allAttendance.filter(row => {
                 const dateStr = row[3]; 
                 return dateStr && dateStr.toString().includes('2025');
@@ -324,7 +377,6 @@
         const totalSessions = data.length;
         
         // Calculate Total Money from individual sessions (Column 4)
-        // Clean currency string (remove "MVR", commas, spaces)
         const totalMoney = data.reduce((acc, row) => {
             const val = parseFloat(row[4]?.toString().replace(/[^\d.-]/g, '')) || 0;
             return acc + val;
@@ -419,6 +471,23 @@
     function generateCard(name) {
         searchInput.value = '';
         suggestBox.innerHTML = '';
+        
+        // 1. DEBT CHECK LOGIC
+        // Column 1 = Name, Column 2 = Pending (Index 2)
+        const summaryRow = globalData.summary.find(r => r[1] === name);
+        let pendingVal = 0;
+        if (summaryRow) {
+            const raw = summaryRow[2]; 
+            if(raw) pendingVal = parseFloat(raw.toString().replace(/[^\d.-]/g, '')) || 0;
+        }
+
+        if (pendingVal > 0) {
+            // Show Shame Modal
+            document.getElementById('debtAmount').innerText = `MVR ${pendingVal}`;
+            document.getElementById('debtModal').style.display = 'flex';
+        }
+
+        // 2. Generate Card (It will appear behind the modal if debt > 0)
         
         // Calculate Stats from 2025 Data
         const data = globalData.attendance2025;

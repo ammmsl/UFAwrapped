@@ -10,12 +10,13 @@
     <style>
         :root {
             --bg-dark: #0a0a0a;
-            --primary: #5271ff; /* Electric Blue */
-            --accent: #00ff88;  /* Neon Green */
+            --primary: #5271ff;
+            --accent: #00ff88; 
             --danger: #ff4757;
             --text-main: #ffffff;
             --text-dim: #a0a0a0;
             --card-bg: rgba(255, 255, 255, 0.1);
+            --c1: #00ff88; --c2: #ccff00; --c3: #ffcc00; --c4: #ff6600; --c5: #ff0044;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -29,7 +30,6 @@
             width: 100vw;
         }
 
-        /* Loading Screen */
         #loader {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg-dark); z-index: 999;
@@ -43,7 +43,6 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Scroll Snap Container */
         .story-container {
             height: 100vh;
             width: 100%;
@@ -52,7 +51,6 @@
             scroll-behavior: smooth;
         }
 
-        /* Individual Slides */
         section {
             height: 100vh;
             width: 100%;
@@ -68,190 +66,162 @@
             overflow: hidden;
         }
 
-        /* Typography */
         h1, h2 { font-family: 'Anton', sans-serif; text-transform: uppercase; line-height: 1.1; letter-spacing: 1px; }
         h1 { font-size: 3.5rem; margin-bottom: 10px; background: linear-gradient(to right, #fff, #aaa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         h2 { font-size: 2.5rem; margin-bottom: 20px; color: var(--accent); }
         p { font-size: 1.1rem; color: var(--text-dim); line-height: 1.5; max-width: 80%; margin: 0 auto 20px auto; }
         .big-stat { font-family: 'Anton', sans-serif; font-size: 5rem; color: var(--primary); text-shadow: 0 0 20px rgba(82, 113, 255, 0.5); margin: 20px 0; }
         
-        /* Graphics */
-        .disc-graphic {
-            position: absolute; width: 300px; height: 300px;
-            border-radius: 50%; border: 2px solid rgba(255,255,255,0.05);
-            top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 0; pointer-events: none;
-        }
-        .disc-graphic::before {
-            content: ''; position: absolute; top: 50%; left: 50%;
-            width: 80%; height: 80%; transform: translate(-50%, -50%);
-            border-radius: 50%; border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        /* Slide Specifics */
         .content-box { z-index: 2; position: relative; width: 100%; max-width: 400px; }
         
-        /* Leaderboard & Roster Items */
+        /* HEATMAP STYLES */
+        .heatmap-subwindow {
+            width: 100%;
+            max-height: 55vh;
+            overflow-y: auto;
+            background: rgba(255,255,255,0.03);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 5px;
+            scrollbar-width: none;
+        }
+        .heatmap-subwindow::-webkit-scrollbar { display: none; }
+
+        .grid-stream {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            width: 100%;
+        }
+
+        .tile {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.1s;
+            border: 0.5px solid rgba(255,255,255,0.05);
+        }
+        .tile:active { transform: scale(0.95); }
+
+        .month-badge {
+            position: absolute;
+            top: 4px;
+            font-size: 0.5rem;
+            font-weight: 900;
+            color: rgba(0,0,0,0.4);
+            text-transform: uppercase;
+        }
+
+        .tile-date { font-size: 1.1rem; font-weight: 900; color: rgba(0,0,0,0.6); }
+
+        .c-1 { background-color: var(--c1); }
+        .c-2 { background-color: var(--c2); }
+        .c-3 { background-color: var(--c3); }
+        .c-4 { background-color: var(--c4); }
+        .c-5 { background-color: var(--c5); }
+
+        #detail-sheet {
+            position: fixed; bottom: -100%; left: 0; width: 100%;
+            background: #111; border-top: 4px solid var(--accent);
+            border-radius: 24px 24px 0 0; padding: 25px;
+            box-sizing: border-box; transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 3000; text-align: left;
+        }
+        #detail-sheet.active { bottom: 0; }
+        .stat-card-heat { background: #1a1a1a; padding: 15px; border-radius: 12px; margin: 10px 0; }
+        .stat-val-heat { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
+        .close-btn-heat {
+            background: var(--accent); border: none; color: black; width: 100%;
+            padding: 12px; border-radius: 10px; font-weight: bold; margin-top: 10px;
+        }
+
+        /* Standard Wrapped Components */
         .leaderboard-item, .roster-item {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            padding: 15px; margin: 10px 0;
-            border-radius: 12px;
+            background: var(--card-bg); backdrop-filter: blur(10px);
+            padding: 15px; margin: 10px 0; border-radius: 12px;
             display: flex; justify-content: space-between; align-items: center;
             border: 1px solid rgba(255,255,255,0.1);
         }
-        
-        /* Animation for main leaderboard only */
-        .leaderboard-item {
-            transform: translateX(-100px); opacity: 0;
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+        .leaderboard-item { transform: translateX(-100px); opacity: 0; transition: all 0.5s ease-out; }
         .leaderboard-item.visible { transform: translateX(0); opacity: 1; }
-
         .rank { font-weight: 900; font-size: 1.5rem; width: 45px; color: var(--accent); text-align: left; }
-        .player-name { font-weight: 700; flex-grow: 1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .player-name { font-weight: 700; flex-grow: 1; text-align: left; }
         .score { font-family: 'Anton', sans-serif; font-size: 1.2rem; }
-
-        /* Chart Container */
-        .chart-wrapper { width: 100%; height: 250px; margin-top: 20px; }
-
-        /* Personal Search Slide */
+        .chart-wrapper { width: 100%; height: 250px; }
         .search-input {
             background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2);
-            color: white; padding: 15px; border-radius: 30px; width: 100%;
-            font-size: 1.2rem; text-align: center; margin-bottom: 20px; outline: none;
+            color: white; padding: 15px; border-radius: 30px; width: 100%; text-align: center;
         }
-        .search-input:focus { border-color: var(--accent); }
-        .suggestions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-height: 150px; overflow-y: auto; }
-        .suggestion-chip {
-            background: rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 20px;
-            font-size: 0.9rem; cursor: pointer; transition: background 0.2s;
-        }
-
-        /* Player Card */
         #playerCard {
             display: none; background: linear-gradient(145deg, #1a1a2e, #16213e);
-            border: 1px solid rgba(255,255,255,0.2); border-radius: 20px;
-            padding: 30px; margin-top: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-radius: 20px; padding: 30px; margin-top: 20px;
         }
-        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        
-        .persona-badge {
-            background: var(--accent); color: #000; display: inline-block;
-            padding: 5px 15px; border-radius: 20px; font-weight: 900; text-transform: uppercase;
-            font-size: 0.8rem; margin-bottom: 15px; letter-spacing: 1px;
-        }
+        .scrollable-roster { width: 100%; height: 50vh; overflow-y: auto; margin-top: 20px; }
 
-        /* Full Roster Scroll Area */
-        .scrollable-roster {
-            width: 100%;
-            height: 60vh; /* Takes up 60% of the vertical slide space */
-            overflow-y: auto;
-            overscroll-behavior: contain; /* Prevents scroll chaining to parent */
-            padding-right: 5px;
-            margin-top: 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
-        }
-        /* Custom Scrollbar */
-        .scrollable-roster::-webkit-scrollbar { width: 5px; }
-        .scrollable-roster::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
-        .scrollable-roster::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
-
-        .roster-item {
-            transform: scale(1); transition: transform 0.1s;
-        }
-        .roster-item:active { transform: scale(0.98); }
-
-        /* Navigation Hint */
-        .scroll-hint {
-            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-            font-size: 0.8rem; opacity: 0.5; animation: bounce 2s infinite;
-        }
-        @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateX(-50%) translateY(0);} 40% {transform: translateX(-50%) translateY(-10px);} 60% {transform: translateX(-50%) translateY(-5px);} }
-
-        /* DEBT MODAL STYLES */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 1000;
-            justify-content: center; align-items: center;
-            backdrop-filter: blur(5px);
+            background: rgba(0,0,0,0.85); z-index: 4000; justify-content: center; align-items: center;
         }
-        .modal-content {
-            background: linear-gradient(135deg, #1a1a1a, #000);
-            border: 2px solid var(--danger);
-            border-radius: 20px; padding: 30px; text-align: center;
-            max-width: 90%; width: 350px;
-            box-shadow: 0 0 30px rgba(255, 71, 87, 0.4);
-            animation: shake 0.5s ease-in-out;
-        }
-        @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-5px);} 75% {transform: translateX(5px);} }
-        
-        .debt-amount {
-            font-family: 'Anton', sans-serif; font-size: 2.5rem; color: var(--danger); margin: 15px 0;
-        }
-        .qr-img {
-            width: 150px; height: 150px; border-radius: 10px; margin: 10px auto;
-            border: 2px solid #fff;
-        }
-        .pay-btn {
-            background: var(--danger); color: white; border: none; padding: 12px 24px;
-            border-radius: 30px; font-weight: bold; font-size: 1rem; cursor: pointer;
-            margin-top: 15px; width: 100%; text-transform: uppercase;
-        }
-
+        .modal-content { background: #000; border: 2px solid var(--danger); border-radius: 20px; padding: 30px; width: 90%; max-width: 350px; text-align: center;}
     </style>
 </head>
 <body>
 
     <div id="loader">
         <div class="spinner"></div>
-        <div style="font-family: 'Anton'; letter-spacing: 1px;">CRUNCHING 2025 STATS...</div>
+        <div style="font-family: 'Anton';">LOADING 2025...</div>
     </div>
 
     <div id="debtModal" class="modal-overlay">
         <div class="modal-content">
-            <h2 style="color: var(--danger); margin-bottom: 10px;">HOLD UP! ✋</h2>
-            <p style="color: #ddd; font-size: 0.95rem;">We found your stats... but we also found this:</p>
-            
-            <div class="debt-amount" id="debtAmount">MVR 0</div>
-            
-            <img src="payment_qr.png" alt="Payment QR" class="qr-img">
-            
-            <p style="font-size: 0.8rem; color: #aaa; margin-top: 10px;">
-                Clear your balance to reach "Legend" status in real life.
-            </p>
-            
-            <button class="pay-btn" onclick="document.getElementById('debtModal').style.display='none'">
-                I PROMISE I'LL PAY 🥺
-            </button>
+            <h2 style="color: var(--danger);">HOLD UP! ✋</h2>
+            <div style="font-size: 2.5rem; color: var(--danger); font-family: 'Anton';" id="debtAmount">MVR 0</div>
+            <p>Clear your balance to see your card.</p>
+            <button class="close-btn-heat" style="background: var(--danger); color: white;" onclick="document.getElementById('debtModal').style.display='none'">I PROMISE I'LL PAY 🥺</button>
         </div>
+    </div>
+
+    <div id="detail-sheet">
+        <div id="det-date" style="font-size: 0.7rem; color: #888; text-transform: uppercase;">DATE</div>
+        <div style="font-size: 1.4rem; font-weight: 900; margin-bottom: 10px;">Session Economics</div>
+        <div class="stat-card-heat">
+            <div style="font-size: 0.7rem; color: #666;">COST PER HEAD</div>
+            <div class="stat-val-heat" id="det-cost">MVR 0</div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="stat-card-heat">
+                <div style="font-size: 0.7rem; color: #666;">PAYING</div>
+                <div class="stat-val-heat" id="det-paying" style="font-size: 1.2rem;">0</div>
+            </div>
+            <div class="stat-card-heat">
+                <div style="font-size: 0.7rem; color: #666;">TOTAL PLAYERS</div>
+                <div class="stat-val-heat" id="det-total" style="font-size: 1.2rem;">0</div>
+            </div>
+        </div>
+        <button class="close-btn-heat" onclick="document.getElementById('detail-sheet').classList.remove('active')">CLOSE</button>
     </div>
 
     <div class="story-container">
         
         <section id="slide1">
-            <div class="disc-graphic"></div>
             <div class="content-box">
                 <h2 style="color: white; font-size: 1.5rem;">UFA CENTRAL</h2>
                 <h1>2025<br><span style="color: var(--primary)">WRAPPED</span></h1>
-                <p>The numbers are in. <br>The discs have flown. <br>Here is our year in review.</p>
+                <p>The numbers are in. The discs have flown. Here is our year in review.</p>
             </div>
-            <div class="scroll-hint">Scroll Down ↓</div>
         </section>
 
         <section id="slide2">
             <div class="content-box">
                 <h2>THE HUSTLE</h2>
-                <p>2025 Total Impact</p>
                 <div class="big-stat" id="totalSessionsGlobal">0</div>
-                <div style="text-transform: uppercase; letter-spacing: 2px; color: var(--text-dim);">Person-Sessions Played</div>
-                
-                <div style="margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                    <div style="font-size: 2.5rem; font-family: 'Anton'; color: var(--accent);" id="totalMoneyGlobal">0</div>
-                    <div style="font-size: 0.9rem; color: var(--text-dim);">INVESTED IN THE SPORT (MVR)</div>
+                <p>Total Person-Sessions</p>
+                <div style="margin-top: 20px;">
+                    <div style="font-size: 2rem; font-family: 'Anton'; color: var(--accent);" id="totalMoneyGlobal">0</div>
+                    <div style="font-size: 0.8rem; color: var(--text-dim);">MVR INVESTED</div>
                 </div>
             </div>
         </section>
@@ -259,47 +229,42 @@
         <section id="slide3">
             <div class="content-box">
                 <h2>PEAK SEASON</h2>
-                <p>When was the field hottest?</p>
-                <div class="chart-wrapper">
-                    <canvas id="monthChart"></canvas>
+                <div class="chart-wrapper"><canvas id="monthChart"></canvas></div>
+            </div>
+        </section>
+
+        <section id="slide-heatmap">
+            <div class="content-box">
+                <h2>SEASON HEAT</h2>
+                <p>Tap a session to see economics.</p>
+                <div class="heatmap-subwindow">
+                    <div id="grid-stream" class="grid-stream"></div>
+                </div>
+                <div style="font-size: 0.7rem; color: #555; margin-top: 10px; text-transform: uppercase;">
+                    Snapshot of 2025 Sessions
                 </div>
             </div>
         </section>
 
-        <section id="slide4">
+        <section id="slide-iron">
             <div class="content-box">
                 <h2>THE IRON SQUAD</h2>
-                <p>Top attendees of 2025.</p>
-                <div id="leaderboardList" style="width: 100%;">
-                    </div>
+                <div id="leaderboardList" style="width: 100%;"></div>
             </div>
         </section>
 
         <section id="slide5">
             <div class="content-box">
-                <h2>YOUR TURN</h2>
-                <p>Find your player card.</p>
-                
-                <input type="text" id="userSearch" class="search-input" placeholder="Type your name...">
-                <div id="suggestions" class="suggestions"></div>
+                <h2>YOUR CARD</h2>
+                <input type="text" id="userSearch" class="search-input" placeholder="Enter name...">
+                <div id="suggestions" style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; justify-content: center;"></div>
 
                 <div id="playerCard">
-                    <div class="persona-badge" id="playerPersona">ROOKIE</div>
-                    <h1 id="cardName" style="font-size: 2.5rem;">Name</h1>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
-                        <div style="text-align: center;">
-                            <div class="score" style="color: var(--primary);" id="cardSessions">0</div>
-                            <div style="font-size: 0.7rem; color: #aaa;">SESSIONS</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div class="score" style="color: var(--accent);" id="cardRank">#0</div>
-                            <div style="font-size: 0.7rem; color: #aaa;">RANK</div>
-                        </div>
-                    </div>
-                    
-                    <div style="font-size: 0.9rem; color: #fff; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
-                        Favorite Month: <span id="cardFavMonth" style="color: var(--primary); font-weight: bold;">-</span>
+                    <div id="playerPersona" style="background: var(--accent); color: #000; padding: 2px 10px; border-radius: 10px; font-weight: bold; font-size: 0.8rem; display: inline-block;">-</div>
+                    <h1 id="cardName" style="font-size: 2rem; margin: 10px 0;">Name</h1>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div><div class="score" id="cardSessions">0</div><div style="font-size: 0.6rem;">SESSIONS</div></div>
+                        <div><div class="score" id="cardRank">#0</div><div style="font-size: 0.6rem;">RANK</div></div>
                     </div>
                 </div>
             </div>
@@ -307,35 +272,26 @@
 
         <section id="slide6">
             <div class="content-box">
-                <h2>THE FULL SQUAD</h2>
-                <p>Everyone who played in 2025.</p>
-                
-                <div class="scrollable-roster" id="fullRosterList">
-                    </div>
-                
-                <div style="font-size: 0.8rem; color: #555; margin-top: 15px;">
-                    Thanks for an amazing year!
-                </div>
+                <h2>FULL SQUAD</h2>
+                <div class="scrollable-roster" id="fullRosterList"></div>
             </div>
         </section>
 
     </div>
 
 <script>
+    // SNAPSHOT DATA
+    const heatmapRawData = {"4-22":["2025-06-24"],"6-33":["2025-04-20"],"10-10":["2025-02-28"],"10-12":["2025-05-13"],"10-26":["2025-02-21"],"11-11":["2025-02-14"],"12-12":["2025-01-03"],"12-13":["2025-07-01","2025-12-05"],"12-14":["2025-04-01","2025-08-22"],"13-15":["2025-05-06","2025-07-11","2025-08-19","2025-11-07"],"14-14":["2025-06-10","2025-12-23"],"14-16":["2025-08-15","2025-10-31"],"15-15":["2025-07-25"],"15-16":["2025-02-02","2025-06-27"],"15-17":["2025-10-21"],"15-18":["2025-05-16"],"16-16":["2025-05-04","2025-11-16"],"16-18":["2025-04-22","2025-04-25"],"16-19":["2025-06-06","2025-07-15"],"16-21":["2025-07-18"],"16-23":["2025-12-12"],"17-18":["2025-03-25","2025-03-28","2025-10-12"],"17-19":["2025-10-24","2025-11-21"],"17-21":["2025-10-28"],"18-18":["2025-03-03"],"18-19":["2025-01-09"],"19-19":["2025-04-15"],"19-20":["2025-01-14"],"19-21":["2025-05-02","2025-06-17","2025-11-04","2025-12-02"],"19-27":["2025-05-30"],"20-20":["2025-07-04"],"20-22":["2025-09-16","2025-10-03"],"20-23":["2025-09-19"],"20-25":["2025-03-11"],"21-19":["2025-03-21"],"21-22":["2025-06-19"],"21-26":["2025-11-28"],"22-22":["2025-02-18"],"22-23":["2025-08-26","2025-09-09"],"22-29":["2025-05-20"],"23-23":["2025-04-08"],"23-24":["2025-07-29","2025-09-30","2025-12-26"],"23-25":["2025-09-23","2025-11-25"],"23-26":["2025-04-29","2025-08-08"],"24-24":["2025-02-25","2025-03-04","2025-05-27"],"24-26":["2025-01-21","2025-03-18","2025-12-19"],"24-34":["2025-05-09"],"25-25":["2025-02-07"],"26-30":["2025-10-07"],"27-28":["2025-02-11"],"27-32":["2025-08-29"],"28-29":["2025-09-05"],"28-32":["2025-03-14"],"28-33":["2025-11-11"],"29-29":["2025-02-04"],"29-31":["2025-04-11"],"29-33":["2025-09-26"],"29-36":["2025-10-10"],"31-31":["2025-01-28"],"31-32":["2025-10-14"],"31-35":["2025-01-17"],"32-40":["2025-12-16"],"34-37":["2025-03-07"]};
+
     const CONFIG = {
         apiKey: "AIzaSyB4FKQrbrtGpBztkZVriYkEGsXlnLXHAN0",
         sheetID: "1kI6E4J0pL4lUa2NH-FYEd2rWUE7Uzsz-CnGOg68ERtc",
-        baseUrl: "https://sheets.googleapis.com/v4/spreadsheets"
+        baseUrl: "https://sheets.googleapis.com/v4/spreadsheets",
+        bookingCost: 700
     };
 
-    let globalData = {
-        allAttendance: [], // Raw data
-        attendance2025: [], // Filtered for 2025
-        summary: [], // For debts
-        users: []
-    };
+    let globalData = { attendance2025: [], summary: [], users: [] };
 
-    // --- Init ---
     async function init() {
         try {
             const [attRes, sumRes] = await Promise.all([
@@ -343,231 +299,141 @@
                 fetch(`${CONFIG.baseUrl}/${CONFIG.sheetID}/values/Summary Sheet?key=${CONFIG.apiKey}`).then(r=>r.json())
             ]);
             
-            globalData.allAttendance = attRes.values.slice(1);
+            globalData.attendance2025 = attRes.values.slice(1).filter(row => row[3]?.includes('2025'));
             globalData.summary = sumRes.values.slice(1);
-            
-            // --- FILTER: Only 2025 Data ---
-            globalData.attendance2025 = globalData.allAttendance.filter(row => {
-                const dateStr = row[3]; 
-                return dateStr && dateStr.toString().includes('2025');
-            });
-            
-            // Extract unique users from the 2025 dataset
-            const userSet = new Set(globalData.attendance2025.map(r => r[0]));
-            globalData.users = Array.from(userSet).sort();
+            globalData.users = Array.from(new Set(globalData.attendance2025.map(r => r[0]))).sort();
 
+            renderHeatmap(); 
             processAndRender();
             
-            // Hide Loader
-            setTimeout(() => {
-                document.getElementById('loader').style.opacity = '0';
-                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
-            }, 1000);
+            document.getElementById('loader').style.opacity = '0';
+            setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+        } catch (e) { console.error(e); }
+    }
 
-        } catch (e) {
-            alert("Error loading data. Please refresh.");
-            console.error(e);
-        }
+    function renderHeatmap() {
+        const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+        const sessions = [];
+        Object.entries(heatmapRawData).forEach(([key, dates]) => {
+            const [p, t] = key.split('-').map(Number);
+            dates.forEach(d => sessions.push({ date: d, p, t, cost: (CONFIG.bookingCost/p).toFixed(1) }));
+        });
+        sessions.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        const grid = document.getElementById('grid-stream');
+        let lastMonth = -1;
+
+        sessions.forEach(s => {
+            const dObj = new Date(s.date);
+            const m = dObj.getMonth();
+            const tile = document.createElement('div');
+            const costClass = s.cost <= 25 ? 'c-1' : s.cost <= 35 ? 'c-2' : s.cost <= 45 ? 'c-3' : s.cost <= 60 ? 'c-4' : 'c-5';
+            tile.className = `tile ${costClass}`;
+
+            if (m !== lastMonth) {
+                const badge = document.createElement('div');
+                badge.className = 'month-badge';
+                badge.innerText = monthNames[m];
+                tile.appendChild(badge);
+                lastMonth = m;
+            }
+
+            const dateLabel = document.createElement('div');
+            dateLabel.className = 'tile-date';
+            dateLabel.innerText = dObj.getDate();
+            tile.appendChild(dateLabel);
+
+            tile.onclick = (e) => {
+                e.stopPropagation();
+                document.getElementById('det-date').innerText = dObj.toDateString();
+                document.getElementById('det-cost').innerText = `MVR ${s.cost}`;
+                document.getElementById('det-paying').innerText = s.p;
+                document.getElementById('det-total').innerText = s.t;
+                document.getElementById('detail-sheet').classList.add('active');
+            };
+            grid.appendChild(tile);
+        });
     }
 
     function processAndRender() {
-        const data = globalData.attendance2025; // Use filtered data
+        const data = globalData.attendance2025;
         
-        // --- Slide 2: Global Stats ---
-        const totalSessions = data.length;
-        
-        // Calculate Total Money from individual sessions (Column 4)
-        const totalMoney = data.reduce((acc, row) => {
-            const val = parseFloat(row[4]?.toString().replace(/[^\d.-]/g, '')) || 0;
-            return acc + val;
-        }, 0);
-        
-        animateValue(document.getElementById('totalSessionsGlobal'), 0, totalSessions, 2000);
+        document.getElementById('totalSessionsGlobal').innerText = data.length;
+        const totalMoney = data.reduce((acc, row) => acc + (parseFloat(row[4]?.toString().replace(/[^\d.-]/g, '')) || 0), 0);
         document.getElementById('totalMoneyGlobal').innerText = Math.round(totalMoney).toLocaleString();
 
-        // --- Slide 3: Monthly Chart ---
         const months = {};
-        data.forEach(row => {
-            const m = row[2]; // Month column
-            if(m) months[m] = (months[m] || 0) + 1;
-        });
-        
-        // Sort months specifically for chart
+        data.forEach(row => { months[row[2]] = (months[row[2]] || 0) + 1; });
         const monthOrder = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         const labels = Object.keys(months).sort((a,b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
-        const chartData = labels.map(k => months[k]);
+        renderChart(labels, labels.map(k => months[k]));
 
-        renderChart(labels, chartData);
-
-        // --- Data Prep for Leaderboard & Roster ---
         const userCounts = {};
-        data.forEach(row => {
-            const u = row[0];
-            userCounts[u] = (userCounts[u] || 0) + 1;
-        });
-
-        // Convert to array and sort by Count DESC
+        data.forEach(row => { userCounts[row[0]] = (userCounts[row[0]] || 0) + 1; });
         const sortedUsers = Object.entries(userCounts).sort(([,a], [,b]) => b - a);
 
-        // --- Slide 4: Leaderboard (Top 3) ---
-        const top3 = sortedUsers.slice(0, 3);
-        const lbContainer = document.getElementById('leaderboardList');
-        top3.forEach((u, index) => {
-            lbContainer.innerHTML += `
-                <div class="leaderboard-item" style="transition-delay: ${index * 200}ms">
-                    <div class="rank">#${index + 1}</div>
-                    <div class="player-name">${u[0]}</div>
-                    <div class="score">${u[1]}</div>
-                </div>
-            `;
+        const lb = document.getElementById('leaderboardList');
+        sortedUsers.slice(0, 3).forEach((u, i) => {
+            lb.innerHTML += `<div class="leaderboard-item"><div class="rank">#${i+1}</div><div class="player-name">${u[0]}</div><div class="score">${u[1]}</div></div>`;
         });
 
-        // --- Slide 6: Full Roster (All Players) ---
-        const rosterContainer = document.getElementById('fullRosterList');
-        sortedUsers.forEach((u, index) => {
-            rosterContainer.innerHTML += `
-                <div class="roster-item">
-                    <div class="rank" style="font-size: 1rem; opacity: 0.7;">${index + 1}</div>
-                    <div class="player-name" style="font-size: 0.95rem;">${u[0]}</div>
-                    <div class="score" style="font-size: 1rem;">${u[1]}</div>
-                </div>
-            `;
+        const roster = document.getElementById('fullRosterList');
+        sortedUsers.forEach((u, i) => {
+            roster.innerHTML += `<div class="roster-item"><div class="rank" style="font-size:1rem;">${i+1}</div><div class="player-name">${u[0]}</div><div class="score">${u[1]}</div></div>`;
         });
 
-
-        // Intersection Observer for Animations
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    if (entry.target.id === 'slide4') {
+        // FIXED INTERSECTION OBSERVER
+        const obs = new IntersectionObserver((es) => {
+            es.forEach(e => { 
+                if(e.isIntersecting) {
+                    // Trigger Leaderboard animation
+                    if(e.target.id === 'slide-iron') {
                         document.querySelectorAll('.leaderboard-item').forEach(el => el.classList.add('visible'));
+                    }
+                    // BUG FIX: Dismiss Heatmap popup if user scrolls to ANY other section
+                    if(e.target.id !== 'slide-heatmap') {
+                        document.getElementById('detail-sheet').classList.remove('active');
                     }
                 }
             });
         }, { threshold: 0.5 });
-        
-        document.querySelectorAll('section').forEach(s => observer.observe(s));
+        document.querySelectorAll('section').forEach(s => obs.observe(s));
     }
 
-    // --- Search Logic ---
-    const searchInput = document.getElementById('userSearch');
-    const suggestBox = document.getElementById('suggestions');
-
-    searchInput.addEventListener('input', (e) => {
+    document.getElementById('userSearch').addEventListener('input', (e) => {
         const val = e.target.value.toLowerCase();
-        suggestBox.innerHTML = '';
+        const sug = document.getElementById('suggestions');
+        sug.innerHTML = '';
         if(!val) return;
-
-        const matches = globalData.users.filter(u => u.toLowerCase().includes(val)).slice(0, 5);
-        matches.forEach(name => {
+        globalData.users.filter(u => u.toLowerCase().includes(val)).slice(0, 5).forEach(name => {
             const chip = document.createElement('div');
-            chip.className = 'suggestion-chip';
+            chip.style.cssText = "background:rgba(255,255,255,0.1); padding:5px 10px; border-radius:15px; font-size:0.8rem; cursor:pointer;";
             chip.innerText = name;
             chip.onclick = () => generateCard(name);
-            suggestBox.appendChild(chip);
+            sug.appendChild(chip);
         });
     });
 
     function generateCard(name) {
-        searchInput.value = '';
-        suggestBox.innerHTML = '';
-        
-        // 1. DEBT CHECK LOGIC
-        // Column 1 = Name, Column 2 = Pending (Index 2)
         const summaryRow = globalData.summary.find(r => r[1] === name);
-        let pendingVal = 0;
-        if (summaryRow) {
-            const raw = summaryRow[2]; 
-            if(raw) pendingVal = parseFloat(raw.toString().replace(/[^\d.-]/g, '')) || 0;
-        }
-
-        if (pendingVal > 0) {
-            // Show Shame Modal
-            document.getElementById('debtAmount').innerText = `MVR ${pendingVal}`;
+        const debt = parseFloat(summaryRow?.[2]?.toString().replace(/[^\d.-]/g, '')) || 0;
+        if (debt > 0) {
+            document.getElementById('debtAmount').innerText = `MVR ${debt}`;
             document.getElementById('debtModal').style.display = 'flex';
         }
-
-        // 2. Generate Card (It will appear behind the modal if debt > 0)
-        
-        // Calculate Stats from 2025 Data
-        const data = globalData.attendance2025;
-        const userRows = data.filter(r => r[0] === name);
-        const count = userRows.length;
-        
-        // Calculate Rank
-        const allCounts = {};
-        data.forEach(r => allCounts[r[0]] = (allCounts[r[0]] || 0) + 1);
-        const sortedRanks = Object.entries(allCounts).sort(([,a], [,b]) => b - a);
-        const rankIndex = sortedRanks.findIndex(x => x[0] === name);
-        const rank = rankIndex + 1;
-
-        // Favorite Month
-        const uMonths = {};
-        userRows.forEach(r => uMonths[r[2]] = (uMonths[r[2]] || 0) + 1);
-        const favMonth = Object.entries(uMonths).sort(([,a], [,b]) => b - a)[0]?.[0] || '-';
-
-        // Persona Logic
-        let persona = "ROOKIE";
-        if (count > 50) persona = "LEGEND";
-        else if (count > 30) persona = "VETERAN";
-        else if (count > 15) persona = "REGULAR";
-        else if (count > 5) persona = "RISING STAR";
-
-        // Render
+        const userRows = globalData.attendance2025.filter(r => r[0] === name);
         document.getElementById('cardName').innerText = name;
-        document.getElementById('cardSessions').innerText = count;
-        document.getElementById('cardRank').innerText = `#${rank}`;
-        document.getElementById('cardFavMonth').innerText = favMonth;
-        document.getElementById('playerPersona').innerText = persona;
-        
-        const card = document.getElementById('playerCard');
-        card.style.display = 'block';
-        
-        // Confetti effect
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.8 },
-            colors: ['#5271ff', '#00ff88', '#ffffff']
-        });
+        document.getElementById('cardSessions').innerText = userRows.length;
+        document.getElementById('playerCard').style.display = 'block';
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.8 } });
     }
 
-    // --- Chart ---
     function renderChart(labels, data) {
-        const ctx = document.getElementById('monthChart').getContext('2d');
-        new Chart(ctx, {
+        new Chart(document.getElementById('monthChart'), {
             type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: data,
-                    backgroundColor: 'rgba(0, 255, 136, 0.8)',
-                    borderRadius: 4,
-                    barThickness: 15
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { ticks: { color: '#aaa', font: { size: 10 } }, grid: { display: false } },
-                    y: { display: false }
-                }
-            }
+            data: { labels: labels, datasets: [{ data: data, backgroundColor: '#00ff88' }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { ticks: { color: '#888', font: { size: 10 } } } } }
         });
-    }
-
-    // --- Utils ---
-    function animateValue(obj, start, end, duration) {
-        let startTimestamp = null;
-        const step = (timestamp) => {
-            if (!startTimestamp) startTimestamp = timestamp;
-            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-            obj.innerHTML = Math.floor(progress * (end - start) + start);
-            if (progress < 1) window.requestAnimationFrame(step);
-        };
-        window.requestAnimationFrame(step);
     }
 
     init();

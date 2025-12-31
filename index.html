@@ -26,7 +26,9 @@
             color: var(--text-main);
             font-family: 'Inter', sans-serif;
             overflow: hidden; 
+            /* Fix for mobile address bars */
             height: 100vh;
+            height: 100dvh;
             width: 100vw;
         }
 
@@ -44,7 +46,7 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .story-container {
-            height: 100vh;
+            height: 100%;
             width: 100%;
             overflow-y: scroll;
             scroll-snap-type: y mandatory;
@@ -52,7 +54,7 @@
         }
 
         section {
-            height: 100vh;
+            height: 100%;
             width: 100%;
             scroll-snap-align: start;
             position: relative;
@@ -74,7 +76,6 @@
         
         .content-box { z-index: 2; position: relative; width: 100%; max-width: 400px; }
         
-        /* HEATMAP STYLES */
         .heatmap-subwindow {
             width: 100%;
             max-height: 55vh;
@@ -138,7 +139,6 @@
             padding: 12px; border-radius: 10px; font-weight: bold; margin-top: 10px;
         }
 
-        /* Standard Wrapped Components */
         .leaderboard-item, .roster-item {
             background: var(--card-bg); backdrop-filter: blur(10px);
             padding: 15px; margin: 10px 0; border-radius: 12px;
@@ -153,7 +153,7 @@
         .chart-wrapper { width: 100%; height: 250px; }
         .search-input {
             background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2);
-            color: white; padding: 15px; border-radius: 30px; width: 100%; text-align: center;
+            color: white; padding: 15px; border-radius: 30px; width: 100%; text-align: center; font-size: 1rem;
         }
         #playerCard {
             display: none; background: linear-gradient(145deg, #1a1a2e, #16213e);
@@ -291,6 +291,8 @@
     };
 
     let globalData = { attendance2025: [], summary: [], users: [] };
+    // Make sorted users accessible globally for rank calculation
+    window.globalSortedUsers = [];
 
     async function init() {
         try {
@@ -370,27 +372,24 @@
 
         const userCounts = {};
         data.forEach(row => { userCounts[row[0]] = (userCounts[row[0]] || 0) + 1; });
-        const sortedUsers = Object.entries(userCounts).sort(([,a], [,b]) => b - a);
+        window.globalSortedUsers = Object.entries(userCounts).sort(([,a], [,b]) => b - a);
 
         const lb = document.getElementById('leaderboardList');
-        sortedUsers.slice(0, 3).forEach((u, i) => {
+        window.globalSortedUsers.slice(0, 3).forEach((u, i) => {
             lb.innerHTML += `<div class="leaderboard-item"><div class="rank">#${i+1}</div><div class="player-name">${u[0]}</div><div class="score">${u[1]}</div></div>`;
         });
 
         const roster = document.getElementById('fullRosterList');
-        sortedUsers.forEach((u, i) => {
+        window.globalSortedUsers.forEach((u, i) => {
             roster.innerHTML += `<div class="roster-item"><div class="rank" style="font-size:1rem;">${i+1}</div><div class="player-name">${u[0]}</div><div class="score">${u[1]}</div></div>`;
         });
 
-        // FIXED INTERSECTION OBSERVER
         const obs = new IntersectionObserver((es) => {
             es.forEach(e => { 
                 if(e.isIntersecting) {
-                    // Trigger Leaderboard animation
                     if(e.target.id === 'slide-iron') {
                         document.querySelectorAll('.leaderboard-item').forEach(el => el.classList.add('visible'));
                     }
-                    // BUG FIX: Dismiss Heatmap popup if user scrolls to ANY other section
                     if(e.target.id !== 'slide-heatmap') {
                         document.getElementById('detail-sheet').classList.remove('active');
                     }
@@ -404,12 +403,17 @@
         const val = e.target.value.toLowerCase();
         const sug = document.getElementById('suggestions');
         sug.innerHTML = '';
-        if(!val) return;
+        if(val.length < 2) return; // Fix: Only search after 2 chars
+        
         globalData.users.filter(u => u.toLowerCase().includes(val)).slice(0, 5).forEach(name => {
             const chip = document.createElement('div');
-            chip.style.cssText = "background:rgba(255,255,255,0.1); padding:5px 10px; border-radius:15px; font-size:0.8rem; cursor:pointer;";
+            chip.style.cssText = "background:rgba(255,255,255,0.1); padding:10px 15px; border-radius:15px; font-size:0.8rem; cursor:pointer;";
             chip.innerText = name;
-            chip.onclick = () => generateCard(name);
+            chip.onclick = () => {
+                generateCard(name);
+                document.getElementById('userSearch').value = '';
+                sug.innerHTML = '';
+            };
             sug.appendChild(chip);
         });
     });
@@ -417,14 +421,30 @@
     function generateCard(name) {
         const summaryRow = globalData.summary.find(r => r[1] === name);
         const debt = parseFloat(summaryRow?.[2]?.toString().replace(/[^\d.-]/g, '')) || 0;
+        
         if (debt > 0) {
             document.getElementById('debtAmount').innerText = `MVR ${debt}`;
             document.getElementById('debtModal').style.display = 'flex';
         }
+
         const userRows = globalData.attendance2025.filter(r => r[0] === name);
+        const count = userRows.length;
+        
+        // Persona Logic
+        const personaEl = document.getElementById('playerPersona');
+        if (count >= 40) personaEl.innerText = "ELITE LEGEND";
+        else if (count >= 20) personaEl.innerText = "IRON SQUAD";
+        else if (count >= 10) personaEl.innerText = "REGULAR FLYER";
+        else personaEl.innerText = "ROOKIE SEASON";
+
+        // Rank Calculation
+        const rank = window.globalSortedUsers.findIndex(u => u[0] === name) + 1;
+
         document.getElementById('cardName').innerText = name;
-        document.getElementById('cardSessions').innerText = userRows.length;
+        document.getElementById('cardSessions').innerText = count;
+        document.getElementById('cardRank').innerText = `#${rank}`;
         document.getElementById('playerCard').style.display = 'block';
+        
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.8 } });
     }
 

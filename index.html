@@ -3,19 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>UFA 2025 Wrapped</title>
+    <title>UFA 2025 Wrapped | Ultimate Frisbee Association</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --bg-dark: #0a0a0a;
-            --primary: #5271ff;
+            --primary: #4196ad; /* UFA Teal */
             --accent: #00ff88; 
             --danger: #ff4757;
             --text-main: #ffffff;
             --text-dim: #a0a0a0;
-            --card-bg: rgba(255, 255, 255, 0.1);
+            --card-bg: rgba(255, 255, 255, 0.05);
             --c1: #00ff88; --c2: #ccff00; --c3: #ffcc00; --c4: #ff6600; --c5: #ff0044;
         }
 
@@ -25,26 +27,26 @@
             background-color: var(--bg-dark);
             color: var(--text-main);
             font-family: 'Inter', sans-serif;
-            overflow: hidden; 
-            /* Fix for mobile address bars */
-            height: 100vh;
             height: 100dvh;
             width: 100vw;
+            overflow: hidden;
         }
 
+        /* --- Transitions & Loaders --- */
         #loader {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-dark); z-index: 999;
+            background: var(--bg-dark); z-index: 9999;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             transition: opacity 0.5s ease;
         }
         .spinner {
             width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1);
-            border-top: 5px solid var(--accent); border-radius: 50%;
+            border-top: 5px solid var(--primary); border-radius: 50%;
             animation: spin 1s linear infinite; margin-bottom: 20px;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* --- Story Layout --- */
         .story-container {
             height: 100%;
             width: 100%;
@@ -64,160 +66,127 @@
             justify-content: center;
             align-items: center;
             text-align: center;
-            background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+            background: radial-gradient(circle at center, #1a2a30 0%, #000 100%);
             overflow: hidden;
         }
 
         h1, h2 { font-family: 'Anton', sans-serif; text-transform: uppercase; line-height: 1.1; letter-spacing: 1px; }
-        h1 { font-size: 3.5rem; margin-bottom: 10px; background: linear-gradient(to right, #fff, #aaa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        h2 { font-size: 2.5rem; margin-bottom: 20px; color: var(--accent); }
+        h1 { font-size: 3.5rem; margin-bottom: 10px; }
+        h2 { font-size: 2.5rem; margin-bottom: 20px; color: var(--primary); }
         p { font-size: 1.1rem; color: var(--text-dim); line-height: 1.5; max-width: 80%; margin: 0 auto 20px auto; }
-        .big-stat { font-family: 'Anton', sans-serif; font-size: 5rem; color: var(--primary); text-shadow: 0 0 20px rgba(82, 113, 255, 0.5); margin: 20px 0; }
         
         .content-box { z-index: 2; position: relative; width: 100%; max-width: 400px; }
-        
-        .heatmap-subwindow {
-            width: 100%;
-            max-height: 55vh;
-            overflow-y: auto;
-            background: rgba(255,255,255,0.03);
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 5px;
-            scrollbar-width: none;
-        }
-        .heatmap-subwindow::-webkit-scrollbar { display: none; }
 
-        .grid-stream {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            width: 100%;
-        }
+        /* --- Chart Wrapper --- */
+        .chart-wrapper { width: 100%; height: 250px; margin-top: 20px; }
 
-        .tile {
-            aspect-ratio: 1 / 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            cursor: pointer;
-            transition: transform 0.1s;
-            border: 0.5px solid rgba(255,255,255,0.05);
-        }
-        .tile:active { transform: scale(0.95); }
-
-        .month-badge {
-            position: absolute;
-            top: 4px;
-            font-size: 0.5rem;
-            font-weight: 900;
-            color: rgba(0,0,0,0.4);
-            text-transform: uppercase;
-        }
-
-        .tile-date { font-size: 1.1rem; font-weight: 900; color: rgba(0,0,0,0.6); }
-
-        .c-1 { background-color: var(--c1); }
-        .c-2 { background-color: var(--c2); }
-        .c-3 { background-color: var(--c3); }
-        .c-4 { background-color: var(--c4); }
-        .c-5 { background-color: var(--c5); }
-
-        #detail-sheet {
-            position: fixed; bottom: -100%; left: 0; width: 100%;
-            background: #111; border-top: 4px solid var(--accent);
-            border-radius: 24px 24px 0 0; padding: 25px;
-            box-sizing: border-box; transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 3000; text-align: left;
-        }
-        #detail-sheet.active { bottom: 0; }
-        .stat-card-heat { background: #1a1a1a; padding: 15px; border-radius: 12px; margin: 10px 0; }
-        .stat-val-heat { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
-        .close-btn-heat {
-            background: var(--accent); border: none; color: black; width: 100%;
-            padding: 12px; border-radius: 10px; font-weight: bold; margin-top: 10px;
-        }
-
-        .leaderboard-item, .roster-item {
-            background: var(--card-bg); backdrop-filter: blur(10px);
-            padding: 15px; margin: 10px 0; border-radius: 12px;
+        /* --- Leaderboard Styles --- */
+        .leaderboard-item {
+            background: var(--card-bg); padding: 15px; margin: 10px 0; border-radius: 12px;
             display: flex; justify-content: space-between; align-items: center;
             border: 1px solid rgba(255,255,255,0.1);
         }
-        .leaderboard-item { transform: translateX(-100px); opacity: 0; transition: all 0.5s ease-out; }
-        .leaderboard-item.visible { transform: translateX(0); opacity: 1; }
-        .rank { font-weight: 900; font-size: 1.5rem; width: 45px; color: var(--accent); text-align: left; }
+        .rank { font-weight: 900; font-size: 1.5rem; width: 45px; color: var(--primary); text-align: left; }
         .player-name { font-weight: 700; flex-grow: 1; text-align: left; }
         .score { font-family: 'Anton', sans-serif; font-size: 1.2rem; }
-        .chart-wrapper { width: 100%; height: 250px; }
-        .search-input {
-            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2);
-            color: white; padding: 15px; border-radius: 30px; width: 100%; text-align: center; font-size: 1rem;
-        }
-        #playerCard {
-            display: none; background: linear-gradient(145deg, #1a1a2e, #16213e);
-            border-radius: 20px; padding: 30px; margin-top: 20px;
-        }
-        .scrollable-roster { width: 100%; height: 50vh; overflow-y: auto; margin-top: 20px; }
 
+        /* --- Heatmap UI --- */
+        .heatmap-subwindow {
+            width: 100%; max-height: 50vh; overflow-y: auto;
+            background: rgba(255,255,255,0.03); border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1); padding: 5px; scrollbar-width: none;
+        }
+        .grid-stream { display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; }
+        .tile { aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; border: 0.5px solid rgba(255,255,255,0.05); }
+        .month-badge { position: absolute; top: 4px; font-size: 0.5rem; font-weight: 900; color: rgba(0,0,0,0.4); text-transform: uppercase; }
+        .tile-date { font-size: 1.1rem; font-weight: 900; color: rgba(0,0,0,0.6); }
+        .c-1 { background-color: var(--c1); } .c-2 { background-color: var(--c2); } .c-3 { background-color: var(--c3); } .c-4 { background-color: var(--c4); } .c-5 { background-color: var(--c5); }
+
+        /* --- Detail Sheet --- */
+        #detail-sheet {
+            position: fixed; bottom: -100%; left: 0; width: 100%;
+            background: #111; border-top: 4px solid var(--primary);
+            border-radius: 24px 24px 0 0; padding: 25px; z-index: 3000; transition: bottom 0.3s ease;
+        }
+        #detail-sheet.active { bottom: 0; }
+        .stat-card-heat { background: #1a1a1a; padding: 15px; border-radius: 12px; margin: 10px 0; text-align: left; }
+        .stat-val-heat { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+
+        /* --- Leaderboard/Roster --- */
+        .roster-item {
+            background: var(--card-bg); padding: 15px; margin: 8px 0; border-radius: 12px;
+            display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .scrollable-roster { width: 100%; height: 50vh; overflow-y: auto; }
+
+        /* --- PLAYER CARD --- */
+        #playerCardContainer {
+            display: none; width: 100%; max-width: 400px;
+            aspect-ratio: 4 / 5; background: linear-gradient(180deg, #162a33 0%, #000 100%);
+            position: relative; padding: 25px; flex-direction: column; justify-content: space-between;
+            border: 4px solid var(--primary); border-radius: 12px; text-align: left;
+            margin: 20px auto;
+        }
+        .card-logo { position: absolute; top: 40px; right: 20px; height: 35px; }
+        .card-name { font-family: 'Anton'; font-size: 2.2rem; text-transform: uppercase; margin-top: 10px; }
+        .card-persona { background: var(--accent); color: #000; display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: 900; font-size: 0.7rem; }
+        .card-main-stat { font-family: 'Anton'; font-size: 4.5rem; color: var(--primary); line-height: 1; margin: 10px 0; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-box { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border-left: 3px solid var(--primary); }
+        .stat-label { font-size: 0.5rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { font-family: 'Anton'; font-size: 1.2rem; }
+
+        .search-input {
+            width: 100%; padding: 15px; border-radius: 30px; border: 2px solid var(--primary);
+            background: rgba(255,255,255,0.05); color: white; text-align: center; font-size: 1rem;
+        }
+
+        /* --- Modal --- */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 4000; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center;
         }
-        .modal-content { background: #000; border: 2px solid var(--danger); border-radius: 20px; padding: 30px; width: 90%; max-width: 350px; text-align: center;}
+        .modal-content { background: #000; border: 2px solid var(--danger); border-radius: 20px; padding: 30px; width: 90%; max-width: 350px; text-align: center; }
+        
+        .btn-export {
+            margin-top: 15px; padding: 12px; width: 100%; border-radius: 10px;
+            background: var(--primary); color: white; font-weight: bold; border: none; cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
-    <div id="loader">
-        <div class="spinner"></div>
-        <div style="font-family: 'Anton';">LOADING 2025...</div>
-    </div>
+    <div id="loader"><div class="spinner"></div><div style="font-family: 'Anton';">UFA 2025 WRAPPED</div></div>
 
     <div id="debtModal" class="modal-overlay">
         <div class="modal-content">
-            <h2 style="color: var(--danger);">HOLD UP! ✋</h2>
-            <div style="font-size: 2.5rem; color: var(--danger); font-family: 'Anton';" id="debtAmount">MVR 0</div>
-            <p>Clear your balance to see your card.</p>
-            <button class="close-btn-heat" style="background: var(--danger); color: white;" onclick="document.getElementById('debtModal').style.display='none'">I PROMISE I'LL PAY 🥺</button>
+            <h2 style="color: var(--danger);">PENDING PAYMENT ✋</h2>
+            <div style="font-size: 2.5rem; color: white; font-family: 'Anton'; margin: 15px 0;" id="debtAmount">MVR 0</div>
+            <p>Clear your balance to unlock your 2025 Wrapped card.</p>
+            <button class="btn-export" style="background: var(--danger);" onclick="bypassDebtAndShow()">I PROMISE I'LL PAY 🥺</button>
         </div>
     </div>
 
     <div id="detail-sheet">
         <div id="det-date" style="font-size: 0.7rem; color: #888; text-transform: uppercase;">DATE</div>
         <div style="font-size: 1.4rem; font-weight: 900; margin-bottom: 10px;">Session Economics</div>
-        <div class="stat-card-heat">
-            <div style="font-size: 0.7rem; color: #666;">COST PER HEAD</div>
-            <div class="stat-val-heat" id="det-cost">MVR 0</div>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div class="stat-card-heat">
-                <div style="font-size: 0.7rem; color: #666;">PAYING</div>
-                <div class="stat-val-heat" id="det-paying" style="font-size: 1.2rem;">0</div>
-            </div>
-            <div class="stat-card-heat">
-                <div style="font-size: 0.7rem; color: #666;">TOTAL PLAYERS</div>
-                <div class="stat-val-heat" id="det-total" style="font-size: 1.2rem;">0</div>
-            </div>
-        </div>
-        <button class="close-btn-heat" onclick="document.getElementById('detail-sheet').classList.remove('active')">CLOSE</button>
+        <div class="stat-card-heat"><div style="font-size: 0.7rem; color: #666;">COST PER HEAD</div><div class="stat-val-heat" id="det-cost">MVR 0</div></div>
+        <button class="btn-export" onclick="document.getElementById('detail-sheet').classList.remove('active')">CLOSE</button>
     </div>
 
     <div class="story-container">
-        
-        <section id="slide1">
+        <section>
             <div class="content-box">
-                <h2 style="color: white; font-size: 1.5rem;">UFA CENTRAL</h2>
+                <img src="webBanner.png" style="width: 100%; max-width: 280px; margin-bottom: 20px;" alt="UFA Logo">
                 <h1>2025<br><span style="color: var(--primary)">WRAPPED</span></h1>
                 <p>The numbers are in. The discs have flown. Here is our year in review.</p>
             </div>
         </section>
 
-        <section id="slide2">
+        <section>
             <div class="content-box">
                 <h2>THE HUSTLE</h2>
-                <div class="big-stat" id="totalSessionsGlobal">0</div>
+                <div style="font-family:'Anton'; font-size: 5rem; color: var(--primary);" id="totalSessionsGlobal">0</div>
                 <p>Total Person-Sessions</p>
                 <div style="margin-top: 20px;">
                     <div style="font-size: 2rem; font-family: 'Anton'; color: var(--accent);" id="totalMoneyGlobal">0</div>
@@ -226,61 +195,86 @@
             </div>
         </section>
 
-        <section id="slide3">
+        <section>
             <div class="content-box">
                 <h2>PEAK SEASON</h2>
+                <p>Monthly attendance breakdown</p>
                 <div class="chart-wrapper"><canvas id="monthChart"></canvas></div>
+            </div>
+        </section>
+
+        <section>
+            <div class="content-box">
+                <h2>THE IRON SQUAD</h2>
+                <p>Our most consistent legends</p>
+                <div id="leaderboardList" style="width: 100%;"></div>
             </div>
         </section>
 
         <section id="slide-heatmap">
             <div class="content-box">
                 <h2>SEASON HEAT</h2>
-                <p>Tap a session to see economics.</p>
-                <div class="heatmap-subwindow">
-                    <div id="grid-stream" class="grid-stream"></div>
-                </div>
-                <div style="font-size: 0.7rem; color: #555; margin-top: 10px; text-transform: uppercase;">
-                    Snapshot of 2025 Sessions
-                </div>
+                <p>Economic snapshot of 2025</p>
+                <div class="heatmap-subwindow"><div id="grid-stream" class="grid-stream"></div></div>
             </div>
         </section>
 
-        <section id="slide-iron">
-            <div class="content-box">
-                <h2>THE IRON SQUAD</h2>
-                <div id="leaderboardList" style="width: 100%;"></div>
-            </div>
-        </section>
-
-        <section id="slide5">
+        <section id="slide-card">
             <div class="content-box">
                 <h2>YOUR CARD</h2>
-                <input type="text" id="userSearch" class="search-input" placeholder="Enter name...">
+                <input type="text" id="userSearch" class="search-input" placeholder="Enter your name...">
                 <div id="suggestions" style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; justify-content: center;"></div>
 
-                <div id="playerCard">
-                    <div id="playerPersona" style="background: var(--accent); color: #000; padding: 2px 10px; border-radius: 10px; font-weight: bold; font-size: 0.8rem; display: inline-block;">-</div>
-                    <h1 id="cardName" style="font-size: 2rem; margin: 10px 0;">Name</h1>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div><div class="score" id="cardSessions">0</div><div style="font-size: 0.6rem;">SESSIONS</div></div>
-                        <div><div class="score" id="cardRank">#0</div><div style="font-size: 0.6rem;">RANK</div></div>
+                <div id="playerCardContainer">
+                    <img src="webBanner.png" class="card-logo" alt="UFA">
+                    <div>
+                        <div class="card-persona" id="c-persona">UFA ATHLETE</div>
+                        <div class="card-name" id="c-name">PLAYER</div>
+                    </div>
+                    <div>
+                        <div class="stat-label">Total Attendance</div>
+                        <div class="card-main-stat" id="c-total">0</div>
+                    </div>
+                    <div class="stat-grid">
+                        <div class="stat-box">
+                            <div class="stat-label">Dynamic Duo</div>
+                            <div class="stat-value" id="c-duo">-</div>
+                            <div style="font-size: 0.45rem; color: var(--text-dim); margin-top: 2px; text-transform: uppercase;">Most shared sessions</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Iron Streak</div>
+                            <div class="stat-value" id="c-streak">0</div>
+                            <div style="font-size: 0.45rem; color: var(--text-dim); margin-top: 2px; text-transform: uppercase;">Max consecutive games</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Anchor Factor</div>
+                            <div class="stat-value" id="c-anchor">0</div>
+                            <div style="font-size: 0.45rem; color: var(--text-dim); margin-top: 2px; text-transform: uppercase;">Low-turnout loyalty</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Power Share</div>
+                            <div class="stat-value" id="c-contrib">0%</div>
+                            <div style="font-size: 0.45rem; color: var(--text-dim); margin-top: 2px; text-transform: uppercase;">Total cost contribution</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px;">
+                        <div style="font-family:'Anton'; font-size: 0.8rem; color: var(--primary);">@frisbee.mv</div>
+                        <div style="font-size: 0.5rem; color: var(--text-dim);">2025 UFA</div>
                     </div>
                 </div>
+                <button id="btnDownload" class="btn-export" style="display:none;" onclick="exportCard()">SAVE TO GALLERY</button>
             </div>
         </section>
 
-        <section id="slide6">
+        <section>
             <div class="content-box">
                 <h2>FULL SQUAD</h2>
                 <div class="scrollable-roster" id="fullRosterList"></div>
             </div>
         </section>
-
     </div>
 
 <script>
-    // SNAPSHOT DATA
     const heatmapRawData = {"4-22":["2025-06-24"],"6-33":["2025-04-20"],"10-10":["2025-02-28"],"10-12":["2025-05-13"],"10-26":["2025-02-21"],"11-11":["2025-02-14"],"12-12":["2025-01-03"],"12-13":["2025-07-01","2025-12-05"],"12-14":["2025-04-01","2025-08-22"],"13-15":["2025-05-06","2025-07-11","2025-08-19","2025-11-07"],"14-14":["2025-06-10","2025-12-23"],"14-16":["2025-08-15","2025-10-31"],"15-15":["2025-07-25"],"15-16":["2025-02-02","2025-06-27"],"15-17":["2025-10-21"],"15-18":["2025-05-16"],"16-16":["2025-05-04","2025-11-16"],"16-18":["2025-04-22","2025-04-25"],"16-19":["2025-06-06","2025-07-15"],"16-21":["2025-07-18"],"16-23":["2025-12-12"],"17-18":["2025-03-25","2025-03-28","2025-10-12"],"17-19":["2025-10-24","2025-11-21"],"17-21":["2025-10-28"],"18-18":["2025-03-03"],"18-19":["2025-01-09"],"19-19":["2025-04-15"],"19-20":["2025-01-14"],"19-21":["2025-05-02","2025-06-17","2025-11-04","2025-12-02"],"19-27":["2025-05-30"],"20-20":["2025-07-04"],"20-22":["2025-09-16","2025-10-03"],"20-23":["2025-09-19"],"20-25":["2025-03-11"],"21-19":["2025-03-21"],"21-22":["2025-06-19"],"21-26":["2025-11-28"],"22-22":["2025-02-18"],"22-23":["2025-08-26","2025-09-09"],"22-29":["2025-05-20"],"23-23":["2025-04-08"],"23-24":["2025-07-29","2025-09-30","2025-12-26"],"23-25":["2025-09-23","2025-11-25"],"23-26":["2025-04-29","2025-08-08"],"24-24":["2025-02-25","2025-03-04","2025-05-27"],"24-26":["2025-01-21","2025-03-18","2025-12-19"],"24-34":["2025-05-09"],"25-25":["2025-02-07"],"26-30":["2025-10-07"],"27-28":["2025-02-11"],"27-32":["2025-08-29"],"28-29":["2025-09-05"],"28-32":["2025-03-14"],"28-33":["2025-11-11"],"29-29":["2025-02-04"],"29-31":["2025-04-11"],"29-33":["2025-09-26"],"29-36":["2025-10-10"],"31-31":["2025-01-28"],"31-32":["2025-10-14"],"31-35":["2025-01-17"],"32-40":["2025-12-16"],"34-37":["2025-03-07"]};
 
     const CONFIG = {
@@ -290,67 +284,64 @@
         bookingCost: 700
     };
 
-    let globalData = { attendance2025: [], summary: [], users: [] };
-    // Make sorted users accessible globally for rank calculation
-    window.globalSortedUsers = [];
+    let globalData = { attendanceV2: [], summary: [], playerNames: [] };
+    let lastSearchedName = "";
 
     async function init() {
         try {
-            const [attRes, sumRes] = await Promise.all([
-                fetch(`${CONFIG.baseUrl}/${CONFIG.sheetID}/values/PivotAttendance?key=${CONFIG.apiKey}`).then(r=>r.json()),
+            const [v2Res, sumRes] = await Promise.all([
+                fetch(`${CONFIG.baseUrl}/${CONFIG.sheetID}/values/AttendanceV2?key=${CONFIG.apiKey}`).then(r=>r.json()),
                 fetch(`${CONFIG.baseUrl}/${CONFIG.sheetID}/values/Summary Sheet?key=${CONFIG.apiKey}`).then(r=>r.json())
             ]);
             
-            globalData.attendance2025 = attRes.values.slice(1).filter(row => row[3]?.includes('2025'));
+            // Filter: 1. Row must exist. 2. Date must include 2025. 3. Name (r[3]) cannot be empty or "0".
+            globalData.attendanceV2 = v2Res.values.slice(1).filter(r => {
+                const dateCell = r[0] ? r[0].toString() : "";
+                const nameCell = r[3] ? r[3].toString().trim() : "";
+                return dateCell.includes('2025') && nameCell !== "" && nameCell !== "0";
+            });
             globalData.summary = sumRes.values.slice(1);
-            globalData.users = Array.from(new Set(globalData.attendance2025.map(r => r[0]))).sort();
+            globalData.playerNames = [...new Set(globalData.attendanceV2.map(r => r[3]))].sort();
 
             renderHeatmap(); 
             processAndRender();
             
+            // Auto-close detail sheet on scroll
+            document.querySelector('.story-container').addEventListener('scroll', () => {
+                document.getElementById('detail-sheet').classList.remove('active');
+            }, { passive: true });
+
             document.getElementById('loader').style.opacity = '0';
             setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("Initialization Failed:", e); }
     }
 
     function renderHeatmap() {
         const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
         const sessions = [];
         Object.entries(heatmapRawData).forEach(([key, dates]) => {
-            const [p, t] = key.split('-').map(Number);
-            dates.forEach(d => sessions.push({ date: d, p, t, cost: (CONFIG.bookingCost/p).toFixed(1) }));
+            const [p] = key.split('-').map(Number);
+            dates.forEach(d => sessions.push({ date: d, p, cost: (CONFIG.bookingCost/p).toFixed(1) }));
         });
         sessions.sort((a, b) => new Date(a.date) - new Date(b.date));
 
         const grid = document.getElementById('grid-stream');
         let lastMonth = -1;
-
         sessions.forEach(s => {
             const dObj = new Date(s.date);
             const m = dObj.getMonth();
             const tile = document.createElement('div');
             const costClass = s.cost <= 25 ? 'c-1' : s.cost <= 35 ? 'c-2' : s.cost <= 45 ? 'c-3' : s.cost <= 60 ? 'c-4' : 'c-5';
             tile.className = `tile ${costClass}`;
-
             if (m !== lastMonth) {
-                const badge = document.createElement('div');
-                badge.className = 'month-badge';
-                badge.innerText = monthNames[m];
-                tile.appendChild(badge);
-                lastMonth = m;
+                const badge = document.createElement('div'); badge.className = 'month-badge'; badge.innerText = monthNames[m];
+                tile.appendChild(badge); lastMonth = m;
             }
-
-            const dateLabel = document.createElement('div');
-            dateLabel.className = 'tile-date';
-            dateLabel.innerText = dObj.getDate();
+            const dateLabel = document.createElement('div'); dateLabel.className = 'tile-date'; dateLabel.innerText = dObj.getDate();
             tile.appendChild(dateLabel);
-
-            tile.onclick = (e) => {
-                e.stopPropagation();
+            tile.onclick = () => {
                 document.getElementById('det-date').innerText = dObj.toDateString();
                 document.getElementById('det-cost').innerText = `MVR ${s.cost}`;
-                document.getElementById('det-paying').innerText = s.p;
-                document.getElementById('det-total').innerText = s.t;
                 document.getElementById('detail-sheet').classList.add('active');
             };
             grid.appendChild(tile);
@@ -358,102 +349,146 @@
     }
 
     function processAndRender() {
-        const data = globalData.attendance2025;
-        
+        const data = globalData.attendanceV2;
         document.getElementById('totalSessionsGlobal').innerText = data.length;
-        const totalMoney = data.reduce((acc, row) => acc + (parseFloat(row[4]?.toString().replace(/[^\d.-]/g, '')) || 0), 0);
+        const totalMoney = data.reduce((acc, r) => acc + (parseFloat(r[5]?.toString().replace(/[^\d.-]/g, '')) || 0), 0);
         document.getElementById('totalMoneyGlobal').innerText = Math.round(totalMoney).toLocaleString();
 
-        const months = {};
-        data.forEach(row => { months[row[2]] = (months[row[2]] || 0) + 1; });
-        const monthOrder = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        const labels = Object.keys(months).sort((a,b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
-        renderChart(labels, labels.map(k => months[k]));
-
         const userCounts = {};
-        data.forEach(row => { userCounts[row[0]] = (userCounts[row[0]] || 0) + 1; });
-        window.globalSortedUsers = Object.entries(userCounts).sort(([,a], [,b]) => b - a);
-
-        const lb = document.getElementById('leaderboardList');
-        window.globalSortedUsers.slice(0, 3).forEach((u, i) => {
-            lb.innerHTML += `<div class="leaderboard-item"><div class="rank">#${i+1}</div><div class="player-name">${u[0]}</div><div class="score">${u[1]}</div></div>`;
-        });
-
-        const roster = document.getElementById('fullRosterList');
-        window.globalSortedUsers.forEach((u, i) => {
-            roster.innerHTML += `<div class="roster-item"><div class="rank" style="font-size:1rem;">${i+1}</div><div class="player-name">${u[0]}</div><div class="score">${u[1]}</div></div>`;
-        });
-
-        const obs = new IntersectionObserver((es) => {
-            es.forEach(e => { 
-                if(e.isIntersecting) {
-                    if(e.target.id === 'slide-iron') {
-                        document.querySelectorAll('.leaderboard-item').forEach(el => el.classList.add('visible'));
-                    }
-                    if(e.target.id !== 'slide-heatmap') {
-                        document.getElementById('detail-sheet').classList.remove('active');
-                    }
+        const monthlyData = Array(12).fill(0);
+        
+        data.forEach(r => { 
+            userCounts[r[3]] = (userCounts[r[3]] || 0) + 1; 
+            
+            // Explicitly split DD/MM/YYYY to avoid browser date-parsing errors
+            const dateParts = r[0].split('/');
+            if (dateParts.length === 3) {
+                // dateParts[1] is the month (01-12). JavaScript months are 0-11.
+                const monthIndex = parseInt(dateParts[1]) - 1;
+                if (monthIndex >= 0 && monthIndex < 12) {
+                    monthlyData[monthIndex]++;
                 }
-            });
-        }, { threshold: 0.5 });
-        document.querySelectorAll('section').forEach(s => obs.observe(s));
+            }
+        });
+
+        // Peak Season Chart
+        renderChart(["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"], monthlyData);
+
+        const sorted = Object.entries(userCounts).sort((a,b) => b[1] - a[1]);
+        window.globalRanking = sorted;
+
+        // Iron Squad Leaderboard (Top 5)
+        const leaderboard = document.getElementById('leaderboardList');
+        sorted.slice(0, 5).forEach((u, i) => {
+            leaderboard.innerHTML += `
+                <div class="leaderboard-item">
+                    <div class="rank">#${i+1}</div>
+                    <div class="player-name">${u[0]}</div>
+                    <div class="score">${u[1]}</div>
+                </div>`;
+        });
+
+        // Full Roster
+        const roster = document.getElementById('fullRosterList');
+        sorted.forEach((u, i) => {
+            roster.innerHTML += `<div class="roster-item"><div><b>${i+1}.</b> ${u[0]}</div><div style="font-family:'Anton'">${u[1]}</div></div>`;
+        });
+    }
+
+    function renderChart(labels, data) {
+        new Chart(document.getElementById('monthChart'), {
+            type: 'bar',
+            data: { 
+                labels: labels, 
+                datasets: [{ 
+                    data: data, 
+                    backgroundColor: '#4196ad',
+                    borderRadius: 5
+                }] 
+            },
+            options: { 
+                maintainAspectRatio: false, 
+                plugins: { legend: { display: false } }, 
+                scales: { 
+                    y: { display: false, grid: { display: false } }, 
+                    x: { ticks: { color: '#a0a0a0', font: { size: 10 } }, grid: { display: false } } 
+                } 
+            }
+        });
     }
 
     document.getElementById('userSearch').addEventListener('input', (e) => {
         const val = e.target.value.toLowerCase();
         const sug = document.getElementById('suggestions');
         sug.innerHTML = '';
-        if(val.length < 2) return; // Fix: Only search after 2 chars
-        
-        globalData.users.filter(u => u.toLowerCase().includes(val)).slice(0, 5).forEach(name => {
+        if(val.length < 2) return;
+        globalData.playerNames.filter(n => n.toLowerCase().includes(val)).slice(0, 5).forEach(name => {
             const chip = document.createElement('div');
-            chip.style.cssText = "background:rgba(255,255,255,0.1); padding:10px 15px; border-radius:15px; font-size:0.8rem; cursor:pointer;";
+            chip.style.cssText = "background:rgba(65, 150, 173, 0.2); padding:8px 12px; border-radius:15px; font-size:0.8rem; cursor:pointer; border:1px solid var(--primary);";
             chip.innerText = name;
-            chip.onclick = () => {
-                generateCard(name);
-                document.getElementById('userSearch').value = '';
-                sug.innerHTML = '';
-            };
+            chip.onclick = () => { generateCard(name); sug.innerHTML = ''; };
             sug.appendChild(chip);
         });
     });
 
-    function generateCard(name) {
+    function generateCard(name, ignoreDebt = false) {
+        lastSearchedName = name;
         const summaryRow = globalData.summary.find(r => r[1] === name);
         const debt = parseFloat(summaryRow?.[2]?.toString().replace(/[^\d.-]/g, '')) || 0;
         
-        if (debt > 0) {
+        if (debt > 0 && !ignoreDebt) {
             document.getElementById('debtAmount').innerText = `MVR ${debt}`;
             document.getElementById('debtModal').style.display = 'flex';
+            return;
         }
 
-        const userRows = globalData.attendance2025.filter(r => r[0] === name);
+        document.getElementById('debtModal').style.display = 'none';
+        const userRows = globalData.attendanceV2.filter(r => r[3] === name);
+        const userDates = new Set(userRows.map(r => r[0]));
+
+        const partners = {};
+        globalData.attendanceV2.forEach(r => { if (r[3] !== name && userDates.has(r[0])) partners[r[3]] = (partners[r[3]]||0)+1; });
+        const duo = Object.entries(partners).sort((a,b)=>b[1]-a[1])[0] || ["Solo Spirit", 0];
+
+        const allDates = [...new Set(globalData.attendanceV2.map(r=>r[0]))].sort((a,b)=>new Date(a)-new Date(b));
+        let maxS = 0, currS = 0;
+        allDates.forEach(d => { if(userDates.has(d)){ currS++; maxS=Math.max(maxS, currS); } else currS=0; });
+
+        const turnouts = {};
+        globalData.attendanceV2.forEach(r => turnouts[r[0]] = (turnouts[r[0]]||0)+1);
+        const anchors = userRows.filter(r => turnouts[r[0]] <= 15).length;
+
+        const totalClubCost = globalData.attendanceV2.reduce((acc, r) => acc + (parseFloat(r[5]?.toString().replace(/[^\d.-]/g, '')) || 0), 0);
+        const userTotalCost = userRows.reduce((acc, r) => acc + (parseFloat(r[5]?.toString().replace(/[^\d.-]/g, '')) || 0), 0);
+        const share = totalClubCost > 0 ? ((userTotalCost / totalClubCost) * 100).toFixed(2) : 0;
+
+        document.getElementById('c-name').innerText = name;
+        document.getElementById('c-total').innerText = userRows.length;
+        document.getElementById('c-duo').innerText = duo[0].split(' ')[0];
+        document.getElementById('c-streak').innerText = maxS;
+        document.getElementById('c-anchor').innerText = anchors;
+        document.getElementById('c-contrib').innerText = `${share}%`;
+        
         const count = userRows.length;
-        
-        // Persona Logic
-        const personaEl = document.getElementById('playerPersona');
-        if (count >= 40) personaEl.innerText = "ELITE LEGEND";
-        else if (count >= 20) personaEl.innerText = "IRON SQUAD";
-        else if (count >= 10) personaEl.innerText = "REGULAR FLYER";
-        else personaEl.innerText = "ROOKIE SEASON";
+        document.getElementById('c-persona').innerText = count >= 40 ? "ELITE LEGEND" : count >= 20 ? "IRON SQUAD" : "ROOKIE SEASON";
 
-        // Rank Calculation
-        const rank = window.globalSortedUsers.findIndex(u => u[0] === name) + 1;
-
-        document.getElementById('cardName').innerText = name;
-        document.getElementById('cardSessions').innerText = count;
-        document.getElementById('cardRank').innerText = `#${rank}`;
-        document.getElementById('playerCard').style.display = 'block';
-        
-        confetti({ particleCount: 100, spread: 70, origin: { y: 0.8 } });
+        document.getElementById('playerCardContainer').style.display = 'flex';
+        document.getElementById('btnDownload').style.display = 'block';
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.8 }, colors:['#4196ad', '#00ff88'] });
+        document.getElementById('playerCardContainer').scrollIntoView({ behavior: 'smooth' });
     }
 
-    function renderChart(labels, data) {
-        new Chart(document.getElementById('monthChart'), {
-            type: 'bar',
-            data: { labels: labels, datasets: [{ data: data, backgroundColor: '#00ff88' }] },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { ticks: { color: '#888', font: { size: 10 } } } } }
-        });
+    function bypassDebtAndShow() {
+        if (lastSearchedName) generateCard(lastSearchedName, true);
+    }
+
+    async function exportCard() {
+        const card = document.getElementById('playerCardContainer');
+        const canvas = await html2canvas(card, { scale: 3, backgroundColor: '#0a0a0a', useCORS: true });
+        const link = document.createElement('a');
+        link.download = `UFA_Wrapped_2025.png`;
+        link.href = canvas.toDataURL();
+        link.click();
     }
 
     init();
